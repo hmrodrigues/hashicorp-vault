@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -530,12 +530,12 @@ func WrapForwardedForHandler(h http.Handler, l *configutil.Listener) http.Handle
 					if err != nil {
 						respondError(w, http.StatusBadRequest, fmt.Errorf("failed to unescape the client certificate: %w", err))
 					}
-					block, err := base64.StdEncoding.DecodeString(decoded)
+					block, _ := pem.Decode([]byte(decoded))
 					if block == nil {
-						respondError(w, http.StatusBadRequest, fmt.Errorf("failed to decode the client certificate: %w", err))
+						respondError(w, http.StatusBadRequest, fmt.Errorf("failed to decode pem certificate"))
 						return
 					}
-					cert, err := x509.ParseCertificate(block)
+					cert, err := x509.ParseCertificate(block.Bytes)
 					if err != nil {
 						respondError(w, http.StatusBadRequest, fmt.Errorf("failed to parse the client certificate: %w", err))
 						return
